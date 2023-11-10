@@ -25,14 +25,27 @@ public class ChessBoard {
     }
 
     public Piece getPiece(String location) {
+        //If the piece is at an invalid position off the board. Raise a cusotm exception
+        if(!isValidPosition(location)) {
+            throw new ChessBoardLocationOutOfBounds();
+        }
+
         return board.get(getRowNumber(location)).get(getColNumber(location));//Double indexing the list
+    }
+
+    public void setPiece(String position, Piece piece) {
+        board.get(getRowNumber(position)).remove(getColNumber(position));
+        board.get(getRowNumber(position)).add(getColNumber(position),piece);
     }
 
     public ArrayList<String> getMoves(String location) {
        Piece piece = getPiece(location);
        ArrayList<String> moves = new ArrayList<>();
+
+       //Add check to make sure the proper color is receiving moves if it is white's turn and black asks for moves, return an empty moves list
        if(piece==null) {
            return moves;
+
        } else if(piece instanceof Pawn) {
 
            Integer forward = 1;
@@ -40,11 +53,11 @@ public class ChessBoard {
                forward = -1;
            }
 
-
            //Compute the at most 3 possible moves
            String nextSpot = updateLocation(location, forward, 0);
 
-           if(getPiece(nextSpot)==null) {
+           //Check if possible move is a valid position. If that is true then check the spot to see if it is empty.
+           if(isValidPosition(nextSpot) && getPiece(nextSpot)==null) {
                moves.add(updateLocation(location, forward, 0));
            }
 
@@ -60,8 +73,23 @@ public class ChessBoard {
            }
 
 
-
        } else if(piece instanceof Knight) {
+           //Knights can move 2 row/col and 1 col/row (an L-shaped move)
+
+           //Primitive lists that just hold data consecutively in memory
+           Integer[] aChanges = {2, -2};
+           Integer[] bChanges = {1,-1};
+
+           for (Integer aChange : aChanges) {
+               for (Integer bChange : bChanges) {
+                   String nextSpot=updateLocation(location, aChange, bChange);
+                   if(isValidPosition(nextSpot) && (getPiece(nextSpot) == null ) ||
+                           !getPiece(nextSpot).getColor().equals(piece.getColor())) {
+                       moves.add(nextSpot);
+                   }
+               }
+           }
+
 
        } else if(piece instanceof King) {
 
@@ -77,7 +105,7 @@ public class ChessBoard {
            }
 
        }
-       return null;
+       return moves;
     }
 
     public void movePiece(String start, String end) {
@@ -87,9 +115,18 @@ public class ChessBoard {
 
     }
 
-    public void setPiece(String position, Piece piece) {
-        board.get(getRowNumber(position)).remove(getColNumber(position));
-        board.get(getRowNumber(position)).add(getColNumber(position),piece);
+    //Used in getMoves() to check for a possible location to move the piece
+    public String updateLocation(String oldLocation, Integer rowChange, Integer columnChange) {
+        Character newRow = (char) (oldLocation.charAt(1) + rowChange);
+        Character newColumn = (char)(oldLocation.charAt(0) + columnChange);
+
+
+        return "" + newColumn + newRow ;
+    }
+
+    private Boolean isValidPosition(String position) {
+        return position.charAt(0) >= 'A' && position.charAt(0) <='H' &&
+                position.charAt(1) >= '1' && position.charAt(1) <= '8';
     }
 
     private Boolean canAttack(String attacker, String victim) {
@@ -97,10 +134,6 @@ public class ChessBoard {
     }
 
 
-    //Used in getMoves() to check for a possible location to move the piece
-    private String updateLocation(String oldLocation, Integer rowChange, Integer columnChange) {
-        return "";
-    }
 
     private Integer getColNumber(String location) {
         return location.charAt(0) - 'A';

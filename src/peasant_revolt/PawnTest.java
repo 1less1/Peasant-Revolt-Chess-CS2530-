@@ -31,4 +31,12 @@ class PawnTest {
 
 
     }
+
+    @Test
+    public void testUpdateLocation() {
+        ChessBoard cb = new ChessBoard();
+        String oldLocation = "A1";
+        assertEquals("B2", cb.updateLocation(oldLocation,1, 1));
+
+    }
 }
